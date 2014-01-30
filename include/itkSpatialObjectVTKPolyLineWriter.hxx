@@ -39,8 +39,11 @@ SpatialObjectVTKPolyLineWriter< NDimensions >
   if ( m_SpatialObject.IsNotNull() )
   {
     typedef vtkSmartPointer<vtkPoints>      VtkPointsPointer;
+
+    //Suported
     typedef LineSpatialObject<NDimensions>  LineType;
     typedef typename LineType::Pointer      LinePointer;
+
 
     // Create a polydata to store everything in
     vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
@@ -53,25 +56,33 @@ SpatialObjectVTKPolyLineWriter< NDimensions >
     typename SpatialObjectType::ChildrenListType::const_iterator it = childrenList->begin();
     while(it != childrenList->end())
     {
-      LinePointer line = dynamic_cast<LineType *>( (*it).GetPointer() );
-      // float fiberId = static_cast<float>( line->GetId() );
-
-      unsigned int numPts = line->GetNumberOfPoints();
-      vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
-      polyLine->GetPointIds()->SetNumberOfIds(numPts);
-
-      for (unsigned int i = 0; i < numPts; ++i)
+      std::string objectTypeName = (*it)->GetNameOfClass();
+      if ( objectTypeName == "LineSpatialObject")
       {
-        double pt[3];
-        typename LineType::PointType lpsPnt = line->GetPoint(i)->GetPosition();
-        pt[0] = lpsPnt[0];
-        pt[1] = lpsPnt[1];
-        pt[2] = lpsPnt[2];
-        vtkIdType ptId = outPoints->InsertNextPoint( pt );
-        // fiberIdLabel->InsertNextValue(fiberId);
-        polyLine->GetPointIds()->SetId(i,ptId);
+        LinePointer line = dynamic_cast<LineType *>( (*it).GetPointer() );
+        // float fiberId = static_cast<float>( line->GetId() );
+
+        unsigned int numPts = line->GetNumberOfPoints();
+        vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
+        polyLine->GetPointIds()->SetNumberOfIds(numPts);
+
+        for (unsigned int i = 0; i < numPts; ++i)
+        {
+          double pt[3];
+          typename LineType::PointType lpsPnt = line->GetPoint(i)->GetPosition();
+          pt[0] = lpsPnt[0];
+          pt[1] = lpsPnt[1];
+          pt[2] = lpsPnt[2];
+          vtkIdType ptId = outPoints->InsertNextPoint( pt );
+          // fiberIdLabel->InsertNextValue(fiberId);
+          polyLine->GetPointIds()->SetId(i,ptId);
+        }
+        cells->InsertNextCell(polyLine);
       }
-      cells->InsertNextCell(polyLine);
+      else
+      {
+        itkExceptionMacro(<< " Unsupported itk SpatialObject encountered : " << (*it)->GetNameOfClass())
+      }
       it++;
     }
     delete childrenList;

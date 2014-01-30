@@ -4,6 +4,8 @@
 
 //
 #include <itkGroupSpatialObject.h>
+#include <itkLineSpatialObject.h>
+#include <itkBoxSpatialObject.h>
 
 
 using namespace itk;
@@ -13,6 +15,11 @@ int itkSpatialObjectVTKPolyLineWriterTest( int , char * argv[] )
   typedef SpatialObjectVTKPolyLineWriter<3>        SpatialObjectWriterType;
   SpatialObjectWriterType::Pointer writer = SpatialObjectWriterType::New();
   EXERCISE_BASIC_OBJECT_METHODS(writer, SpatialObjectWriterType);
+
+  std::string outputFile = argv[1];
+  writer->SetFileName(outputFile);
+
+//  TEST_SET_GET_VALUE(outputFile,write->GetFileName());
 
   typedef GroupSpatialObject<3>   GroupSpatialObject;
   GroupSpatialObject::Pointer groupObject = GroupSpatialObject::New();
@@ -52,11 +59,40 @@ int itkSpatialObjectVTKPolyLineWriterTest( int , char * argv[] )
   Line->SetId(1);
   Line->SetPoints(list);
   Line->ComputeBoundingBox();
-
   groupObject->AddSpatialObject(Line);
 
+  //add a box...
+
+  typedef itk::BoxSpatialObject< 3 >         BoxType;
+
+  BoxType::Pointer box1 =     BoxType::New();
+  box1->SetId(1);
+
+  // Test the SetProperty()
+  typedef BoxType::PropertyType PropertyType;
+  PropertyType::Pointer prop = PropertyType::New();
+  box1->SetProperty(prop);
+
+  BoxType::SizeType  boxsize1;
+
+  boxsize1[0] = 30;
+  boxsize1[1] = 30;
+  boxsize1[3] = 30;
+  box1->SetSize( boxsize1 );
+
+  BoxType::TransformType::OffsetType offset1;
+
+  offset1[0] =  29.0;
+  offset1[1] =  29.0;
+  offset1[2] =  29.0;
+  box1->GetObjectToParentTransform()->SetOffset( offset1 );
+  box1->ComputeObjectToWorldTransform();
+
+// Uncomment this line to test with a box spaitial object...
+//  groupObject->AddSpatialObject(box1);
+
   writer->SetInput(groupObject);
-  writer->SetFileName(argv[1]);
+
   writer->Update();
   return EXIT_SUCCESS;
 }
